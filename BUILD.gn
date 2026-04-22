@@ -1,0 +1,34 @@
+declare_args() {
+  rustc_path = ""
+}
+
+if (rustc_path == "") {
+  cargo_home = getenv("CARGO_HOME")
+  if (cargo_home == "") {
+    cargo_home = getenv("HOME") + "/.cargo"
+  }
+
+  rustc_path = cargo_home + "/bin/rustc"
+}
+
+action("kernel") {
+  script = "//build/build_kernel.py"
+  sources = [ "src/main.rs" ]
+  inputs = [ "linker.ld" ]
+  outputs = [ "$root_build_dir/kernel.elf" ]
+
+  args = [
+    "--rustc",
+    rustc_path,
+    "--source",
+    rebase_path("//src/main.rs", root_build_dir),
+    "--linker",
+    rebase_path("//linker.ld", root_build_dir),
+    "--output",
+    rebase_path("$root_build_dir/kernel.elf", root_build_dir),
+  ]
+}
+
+group("default") {
+  deps = [ ":kernel" ]
+}
