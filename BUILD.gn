@@ -14,7 +14,7 @@ if (rustc_path == "") {
 action("kernel") {
   script = "//build/build_kernel.py"
   sources = [ "src/main.rs" ]
-  inputs = [ "linker.ld" ]
+  inputs = [ "link.x" ]
   outputs = [ "$root_build_dir/kernel.elf" ]
 
   args = [
@@ -23,7 +23,7 @@ action("kernel") {
     "--source",
     rebase_path("//src/main.rs", root_build_dir),
     "--linker",
-    rebase_path("//linker.ld", root_build_dir),
+    rebase_path("//link.x", root_build_dir),
     "--output",
     rebase_path("$root_build_dir/kernel.elf", root_build_dir),
   ]
