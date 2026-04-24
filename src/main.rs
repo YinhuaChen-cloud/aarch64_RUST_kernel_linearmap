@@ -13,13 +13,21 @@ pub extern "C" fn rust_main() -> ! {
     exception::init();
     mmu::init();
     uart::puts(b"mmu enabled\r\n");
-    uart::puts(b"read 0x8000_0000 -> expect translation fault\r\n");
 
-    unsafe {
-        core::ptr::read_volatile(0x8000_0000 as *const u64);
+    #[cfg(exception_test)]
+    {
+        uart::puts(b"exception test enabled\r\n");
+        uart::puts(b"read 0x8000_0000 -> expect translation fault\r\n");
+
+        unsafe {
+            core::ptr::read_volatile(0x8000_0000 as *const u64);
+        }
+
+        uart::puts(b"returned from exception handler\r\n");
     }
 
-    uart::puts(b"unexpected: access returned\r\n");
+    #[cfg(not(exception_test))]
+    uart::puts(b"exception test disabled\r\n");
 
     loop {
         core::hint::spin_loop();

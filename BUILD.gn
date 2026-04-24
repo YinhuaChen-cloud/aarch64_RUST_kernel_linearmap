@@ -1,5 +1,6 @@
 declare_args() {
   rustc_path = ""
+  exception_test = true
 }
 
 if (rustc_path == "") {
@@ -33,6 +34,13 @@ action("kernel") {
     "--output",
     rebase_path("$root_build_dir/kernel.elf", root_build_dir),
   ]
+
+  if (exception_test) {
+    args += [
+      "--cfg",
+      "exception_test",
+    ]
+  }
 }
 
 group("default") {

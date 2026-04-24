@@ -12,6 +12,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source", required=True)
     parser.add_argument("--linker", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--cfg", action="append", default=[])
     return parser.parse_args()
 
 
@@ -49,10 +50,16 @@ def main() -> int:
         f"link-arg=-T{linker}",
         "--target",
         "aarch64-unknown-none",
+    ]
+
+    for cfg in args.cfg:
+        command.extend(["--cfg", cfg])
+
+    command.extend([
         str(source),
         "-o",
         str(output),
-    ]
+    ])
 
     print(" ".join(command))
     subprocess.run(command, check=True)
