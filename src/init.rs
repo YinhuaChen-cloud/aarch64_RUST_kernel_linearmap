@@ -1,9 +1,11 @@
 #![no_std]
 #![no_main]
+#![allow(special_module_name)]
 
 use core::panic::PanicInfo;
 
 mod exception;
+mod main;
 mod mmu;
 mod start;
 mod uart;
@@ -41,9 +43,7 @@ pub extern "C" fn init() -> ! {
     #[cfg(not(any(translation_fault_test, dram_oob_test)))]
     uart::puts(b"exception test disabled\r\n");
 
-    loop {
-        core::hint::spin_loop();
-    }
+    main::main()
 }
 
 #[panic_handler]

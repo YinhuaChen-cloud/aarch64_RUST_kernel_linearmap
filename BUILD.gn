@@ -18,6 +18,7 @@ action("kernel") {
   sources = [
     "src/exception.rs",
     "src/init.rs",
+    "src/main.rs",
     "src/mmu.rs",
     "src/start.rs",
     "src/uart.rs",
