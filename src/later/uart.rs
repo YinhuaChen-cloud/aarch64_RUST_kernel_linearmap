@@ -1,4 +1,4 @@
-use crate::mmu::LINEAR_MAP_BASE;
+use crate::LINEAR_MAP_BASE;
 
 const PL011_BASE: usize = 0x0900_0000 + LINEAR_MAP_BASE;
 const UART_DR_OFFSET: usize = 0x00;

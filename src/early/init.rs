@@ -1,17 +1,13 @@
 #![no_std]
 #![no_main]
-#![allow(special_module_name)]
 
 use core::panic::PanicInfo;
 
 mod exception;
 mod early_uart;
-mod main;
 mod mmu;
 mod start;
-mod uart;
 
-// 这是 Rust 里的一个属性，用来禁止编译器 “修改” 函数名字
 #[no_mangle]
 pub extern "C" fn init() -> ! {
     exception::init();
@@ -45,7 +41,7 @@ pub extern "C" fn init() -> ! {
     #[cfg(not(any(translation_fault_test, dram_oob_test)))]
     early_uart::early_puts(b"exception test disabled\r\n");
 
-    main::main()
+    later::main()
 }
 
 #[panic_handler]

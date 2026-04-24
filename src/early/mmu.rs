@@ -3,7 +3,6 @@ use core::arch::asm;
 const ENTRY_COUNT: usize = 512;
 const PAGE_SHIFT_2M: usize = 21;
 const PAGE_SHIFT_1G: usize = 30;
-pub const LINEAR_MAP_BASE: usize = 0xffff_ffff_0000_0000;
 const LINEAR_L1_START_INDEX: usize = 0;
 const LINEAR_MAP_GB_COUNT: usize = 4;
 const OOB_TEST_VA: usize = 0xa000_0000;
@@ -84,7 +83,6 @@ unsafe fn build_identity_map() {
         LOW_1GB_L2_TABLE.0[index] = block_desc(phys, device_block_attrs());
     }
 
-    // 左闭右开区间 等价于 >= 1 && < 2
     for index in 1..2 {
         let phys = index << PAGE_SHIFT_1G;
         L1_TABLE.0[index] = block_desc(phys, normal_block_attrs());
@@ -101,9 +99,6 @@ unsafe fn build_identity_map() {
 }
 
 unsafe fn build_linear_map() {
-    // TTBR1 uses the top 4GB VA region selected by T1SZ=32.
-    // Within that region, the walk starts from L1 and uses VA[31:30],
-    // so the 4 x 1GB blocks must live in L1 entries 0..3.
     for index in 0..LINEAR_MAP_GB_COUNT {
         let phys = index << PAGE_SHIFT_1G;
         let attrs = if index == 0 {

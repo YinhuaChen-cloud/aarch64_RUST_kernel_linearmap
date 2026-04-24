@@ -16,13 +16,13 @@ if (rustc_path == "") {
 action("kernel") {
   script = "//build/build_kernel.py"
   sources = [
-    "src/early_uart.rs",
-    "src/exception.rs",
-    "src/init.rs",
-    "src/main.rs",
-    "src/mmu.rs",
-    "src/start.rs",
-    "src/uart.rs",
+    "src/early/early_uart.rs",
+    "src/early/exception.rs",
+    "src/early/init.rs",
+    "src/early/mmu.rs",
+    "src/early/start.rs",
+    "src/later/main.rs",
+    "src/later/uart.rs",
   ]
   inputs = [ "link.x" ]
   outputs = [ "$root_build_dir/kernel.elf" ]
@@ -30,8 +30,10 @@ action("kernel") {
   args = [
     "--rustc",
     rustc_path,
-    "--source",
-    rebase_path("//src/init.rs", root_build_dir),
+    "--early-source",
+    rebase_path("//src/early/init.rs", root_build_dir),
+    "--later-source",
+    rebase_path("//src/later/main.rs", root_build_dir),
     "--linker",
     rebase_path("//link.x", root_build_dir),
     "--output",

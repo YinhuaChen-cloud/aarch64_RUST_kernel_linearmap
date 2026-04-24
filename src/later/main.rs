@@ -1,6 +1,9 @@
-use crate::uart;
+#![no_std]
 
-// 这是 Rust 里的一个属性，用来禁止编译器 “修改” 函数名字
+pub mod uart;
+
+const LINEAR_MAP_BASE: usize = 0xffff_ffff_0000_0000;
+
 #[no_mangle]
 pub extern "C" fn main() -> ! {
     uart::puts(b"hello from main\r\n");

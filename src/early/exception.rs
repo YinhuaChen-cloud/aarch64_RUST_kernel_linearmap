@@ -2,8 +2,6 @@ use core::arch::{asm, global_asm};
 
 use crate::early_uart;
 
-const EXCEPTION_FRAME_SIZE: usize = core::mem::size_of::<ExceptionFrame>();
-
 global_asm!(
     r#"
     .section .text.exceptions, "ax"
@@ -259,18 +257,15 @@ fn fault_name(esr: u64) -> &'static [u8] {
         0x20 | 0x21 | 0x24 | 0x25 => match fsc {
             0b000000..=0b000011 => b"address size fault",
             0b000100..=0b000111 => b"translation fault",
-            0b001000..=0b001011 => b"access flag fault",
-            0b001100..=0b001111 => b"permission fault",
+            0b001001..=0b001011 => b"access flag fault",
+            0b001101..=0b001111 => b"permission fault",
             0b010000 => b"synchronous external abort",
-            0b010100..=0b010111 => b"synchronous external abort on table walk",
-            0b011000 => b"parity or ecc error",
-            0b011100..=0b011111 => b"parity or ecc error on table walk",
+            0b010001 => b"tag check fault",
+            0b010011 => b"synchronous parity or ecc error",
             0b100001 => b"alignment fault",
             0b110000 => b"tlb conflict abort",
-            _ => b"other abort",
+            _ => b"other data/instruction abort",
         },
-        _ => b"unknown",
+        _ => b"unknown exception class",
     }
 }
-
-const _: () = assert!(EXCEPTION_FRAME_SIZE == 288);

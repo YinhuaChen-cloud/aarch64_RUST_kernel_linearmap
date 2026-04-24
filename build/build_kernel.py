@@ -9,7 +9,8 @@ import sys
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build the bare-metal AArch64 Rust kernel")
     parser.add_argument("--rustc", required=True)
-    parser.add_argument("--source", required=True)
+    parser.add_argument("--early-source", required=True)
+    parser.add_argument("--later-source", required=True)
     parser.add_argument("--linker", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--cfg", action="append", default=[])
@@ -19,9 +20,11 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
-    source = pathlib.Path(args.source).resolve()
+    early_source = pathlib.Path(args.early_source).resolve()
+    later_source = pathlib.Path(args.later_source).resolve()
     linker = pathlib.Path(args.linker).resolve()
     output = pathlib.Path(args.output).resolve()
+    later_rlib = output.parent / "liblater.rlib"
     output.parent.mkdir(parents=True, exist_ok=True)
 
     rustc = shutil.which(args.rustc)
@@ -33,33 +36,59 @@ def main() -> int:
         )
         return 1
 
-    command = [
+    common_command = [
         rustc,
         "--edition=2021",
-        "--crate-name",
-        "kernel",
-        "--crate-type",
-        "bin",
         "-C",
         "opt-level=z",
         "-C",
         "panic=abort",
         "-C",
         "relocation-model=static",
-        "-C",
-        f"link-arg=-T{linker}",
         "--target",
         "aarch64-unknown-none",
+    ]
+
+    later_command = [
+        *common_command,
+        "--crate-name",
+        "later",
+        "--crate-type",
+        "rlib",
+    ]
+
+    for cfg in args.cfg:
+        later_command.extend(["--cfg", cfg])
+
+    later_command.extend([
+        str(later_source),
+        "-o",
+        str(later_rlib),
+    ])
+
+    command = [
+        *common_command,
+        "--crate-name",
+        "kernel",
+        "--crate-type",
+        "bin",
+        "-C",
+        f"link-arg=-T{linker}",
+        "--extern",
+        f"later={later_rlib}",
     ]
 
     for cfg in args.cfg:
         command.extend(["--cfg", cfg])
 
     command.extend([
-        str(source),
+        str(early_source),
         "-o",
         str(output),
     ])
+
+    print(" ".join(later_command))
+    subprocess.run(later_command, check=True)
 
     print(" ".join(command))
     subprocess.run(command, check=True)
