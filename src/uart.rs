@@ -15,3 +15,15 @@ pub fn write_byte(byte: u8) {
         core::ptr::write_volatile(UART_DR, byte as u32);
     }
 }
+
+pub fn put_hex_u64(value: u64) {
+    puts(b"0x");
+    for shift in (0..16).rev() {
+        let nibble = ((value >> (shift * 4)) & 0xf) as u8;
+        let digit = match nibble {
+            0..=9 => b'0' + nibble,
+            _ => b'a' + (nibble - 10),
+        };
+        write_byte(digit);
+    }
+}

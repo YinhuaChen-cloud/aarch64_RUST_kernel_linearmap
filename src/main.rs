@@ -3,14 +3,23 @@
 
 use core::panic::PanicInfo;
 
+mod exception;
 mod mmu;
 mod start;
 mod uart;
 
 #[no_mangle]
 pub extern "C" fn rust_main() -> ! {
+    exception::init();
     mmu::init();
-    uart::puts(b"hello world\r\n");
+    uart::puts(b"mmu enabled\r\n");
+    uart::puts(b"read 0x8000_0000 -> expect translation fault\r\n");
+
+    unsafe {
+        core::ptr::read_volatile(0x8000_0000 as *const u64);
+    }
+
+    uart::puts(b"unexpected: access returned\r\n");
 
     loop {
         core::hint::spin_loop();
