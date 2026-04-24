@@ -3,6 +3,7 @@ use core::arch::asm;
 const ENTRY_COUNT: usize = 512;
 const PAGE_SHIFT_2M: usize = 21;
 const PAGE_SHIFT_1G: usize = 30;
+const OOB_TEST_VA: usize = 0xa000_0000;
 
 const DESC_VALID: u64 = 1 << 0;
 const DESC_TABLE: u64 = 1 << 1;
@@ -40,6 +41,8 @@ struct PageTable([u64; ENTRY_COUNT]);
 
 static mut L1_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
 static mut LOW_1GB_L2_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
+#[cfg(dram_oob_test)]
+static mut OOB_1GB_L2_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
 
 #[inline(always)]
 const fn table_desc(addr: usize) -> u64 {
@@ -73,6 +76,15 @@ unsafe fn build_identity_map() {
     for index in 1..2 {
         let phys = index << PAGE_SHIFT_1G;
         L1_TABLE.0[index] = block_desc(phys, normal_block_attrs());
+    }
+
+    #[cfg(dram_oob_test)]
+    {
+        let l1_index = OOB_TEST_VA >> PAGE_SHIFT_1G;
+        let l2_index = (OOB_TEST_VA & ((1usize << PAGE_SHIFT_1G) - 1)) >> PAGE_SHIFT_2M;
+
+        L1_TABLE.0[l1_index] = table_desc(core::ptr::addr_of!(OOB_1GB_L2_TABLE) as usize);
+        OOB_1GB_L2_TABLE.0[l2_index] = block_desc(OOB_TEST_VA, normal_block_attrs());
     }
 }
 

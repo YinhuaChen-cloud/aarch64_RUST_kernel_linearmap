@@ -177,11 +177,19 @@ pub extern "C" fn rust_exception_handler(frame: &mut ExceptionFrame) {
     uart::put_hex_u64(frame.spsr);
     uart::puts(b"\r\n");
 
-    if is_translation_fault(frame.esr) {
-        uart::puts(b"decoded: translation fault\r\n");
+    uart::puts(b"decoded: ");
+    uart::puts(fault_name(frame.esr));
+    uart::puts(b"\r\n");
+
+    if is_address_size_fault(frame.esr) {
+        uart::puts(b"Address Size Fault\r\n");
     }
 
-    #[cfg(exception_test)]
+    if is_translation_fault(frame.esr) {
+        uart::puts(b"Translation Fault\r\n");
+    }
+
+    #[cfg(any(translation_fault_test, dram_oob_test))]
     if should_resume_after_test(frame) {
         uart::puts(b"test enabled: resume at next instruction\r\n");
         frame.elr = frame.elr.wrapping_add(4);
@@ -193,14 +201,18 @@ pub extern "C" fn rust_exception_handler(frame: &mut ExceptionFrame) {
     }
 }
 
-#[cfg(exception_test)]
+#[cfg(any(translation_fault_test, dram_oob_test))]
 fn should_resume_after_test(frame: &ExceptionFrame) -> bool {
-    is_synchronous_vector(frame.vector) && is_translation_fault(frame.esr)
+    is_synchronous_vector(frame.vector) && is_abort_exception(frame.esr)
 }
 
-#[cfg(exception_test)]
+#[cfg(any(translation_fault_test, dram_oob_test))]
 fn is_synchronous_vector(vector: u64) -> bool {
     matches!(vector, 0 | 4 | 8 | 12)
+}
+
+fn is_abort_exception(esr: u64) -> bool {
+    matches!((esr >> 26) & 0x3f, 0x20 | 0x21 | 0x24 | 0x25)
 }
 
 fn put_vector_name(vector: u64) {
@@ -227,9 +239,38 @@ fn put_vector_name(vector: u64) {
 
 fn is_translation_fault(esr: u64) -> bool {
     let ec = (esr >> 26) & 0x3f;
-    let dfsc = esr & 0x3f;
+    let fsc = esr & 0x3f;
 
-    matches!(ec, 0x24 | 0x25) && matches!(dfsc, 0b000100..=0b000111)
+    matches!(ec, 0x20 | 0x21 | 0x24 | 0x25) && matches!(fsc, 0b000100..=0b000111)
+}
+
+fn is_address_size_fault(esr: u64) -> bool {
+    let ec = (esr >> 26) & 0x3f;
+    let fsc = esr & 0x3f;
+
+    matches!(ec, 0x20 | 0x21 | 0x24 | 0x25) && matches!(fsc, 0b000000..=0b000011)
+}
+
+fn fault_name(esr: u64) -> &'static [u8] {
+    let ec = (esr >> 26) & 0x3f;
+    let fsc = esr & 0x3f;
+
+    match ec {
+        0x20 | 0x21 | 0x24 | 0x25 => match fsc {
+            0b000000..=0b000011 => b"address size fault",
+            0b000100..=0b000111 => b"translation fault",
+            0b001000..=0b001011 => b"access flag fault",
+            0b001100..=0b001111 => b"permission fault",
+            0b010000 => b"synchronous external abort",
+            0b010100..=0b010111 => b"synchronous external abort on table walk",
+            0b011000 => b"parity or ecc error",
+            0b011100..=0b011111 => b"parity or ecc error on table walk",
+            0b100001 => b"alignment fault",
+            0b110000 => b"tlb conflict abort",
+            _ => b"other abort",
+        },
+        _ => b"unknown",
+    }
 }
 
 const _: () = assert!(EXCEPTION_FRAME_SIZE == 288);

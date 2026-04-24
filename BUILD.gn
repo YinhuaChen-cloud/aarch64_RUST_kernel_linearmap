@@ -1,6 +1,7 @@
 declare_args() {
   rustc_path = ""
-  exception_test = true
+  translation_fault_test = true
+  dram_oob_test = true
 }
 
 if (rustc_path == "") {
@@ -35,10 +36,17 @@ action("kernel") {
     rebase_path("$root_build_dir/kernel.elf", root_build_dir),
   ]
 
-  if (exception_test) {
+  if (translation_fault_test) {
     args += [
       "--cfg",
-      "exception_test",
+      "translation_fault_test",
+    ]
+  }
+
+  if (dram_oob_test) {
+    args += [
+      "--cfg",
+      "dram_oob_test",
     ]
   }
 }
