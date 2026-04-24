@@ -1,22 +1,9 @@
 #![no_std]
 #![no_main]
 
-use core::arch::global_asm;
 use core::panic::PanicInfo;
 
-global_asm!(
-    r#"
-    .section .text._start, "ax"
-    .global _start
-_start:
-    ldr x0, =__boot_stack_top
-    mov sp, x0
-    bl rust_main
-1:
-    wfe
-    b 1b
-"#
-);
+mod start;
 
 const PL011_BASE: usize = 0x0900_0000;
 const UART_DR: *mut u32 = PL011_BASE as *mut u32;

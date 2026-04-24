@@ -13,7 +13,10 @@ if (rustc_path == "") {
 
 action("kernel") {
   script = "//build/build_kernel.py"
-  sources = [ "src/main.rs" ]
+  sources = [
+    "src/main.rs",
+    "src/start.rs",
+  ]
   inputs = [ "link.x" ]
   outputs = [ "$root_build_dir/kernel.elf" ]
 
