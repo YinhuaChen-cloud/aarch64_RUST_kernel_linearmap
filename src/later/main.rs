@@ -1,6 +1,9 @@
 #![no_std]
 
+pub mod head;
 pub mod uart;
+
+pub use head::jump_to_main;
 
 const LINEAR_MAP_BASE: usize = 0xffff_ffff_0000_0000;
 

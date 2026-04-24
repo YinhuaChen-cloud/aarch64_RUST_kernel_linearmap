@@ -41,7 +41,7 @@ pub extern "C" fn init() -> ! {
     #[cfg(not(any(translation_fault_test, dram_oob_test)))]
     early_uart::early_puts(b"exception test disabled\r\n");
 
-    later::main()
+    later::jump_to_main()
 }
 
 #[panic_handler]
