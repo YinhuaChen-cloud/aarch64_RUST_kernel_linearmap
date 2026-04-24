@@ -1,6 +1,6 @@
 use core::arch::{asm, global_asm};
 
-use crate::uart;
+use crate::early_uart;
 
 const EXCEPTION_FRAME_SIZE: usize = core::mem::size_of::<ExceptionFrame>();
 
@@ -163,35 +163,35 @@ pub struct ExceptionFrame {
 
 #[no_mangle]
 pub extern "C" fn rust_exception_handler(frame: &mut ExceptionFrame) {
-    uart::early_puts(b"\r\nexception: ");
+    early_uart::early_puts(b"\r\nexception: ");
     put_vector_name(frame.vector);
-    uart::early_puts(b"\r\n");
+    early_uart::early_puts(b"\r\n");
 
-    uart::early_puts(b"esr_el1=");
-    uart::early_put_hex_u64(frame.esr);
-    uart::early_puts(b"\r\nfar_el1=");
-    uart::early_put_hex_u64(frame.far);
-    uart::early_puts(b"\r\nelr_el1=");
-    uart::early_put_hex_u64(frame.elr);
-    uart::early_puts(b"\r\nspsr_el1=");
-    uart::early_put_hex_u64(frame.spsr);
-    uart::early_puts(b"\r\n");
+    early_uart::early_puts(b"esr_el1=");
+    early_uart::early_put_hex_u64(frame.esr);
+    early_uart::early_puts(b"\r\nfar_el1=");
+    early_uart::early_put_hex_u64(frame.far);
+    early_uart::early_puts(b"\r\nelr_el1=");
+    early_uart::early_put_hex_u64(frame.elr);
+    early_uart::early_puts(b"\r\nspsr_el1=");
+    early_uart::early_put_hex_u64(frame.spsr);
+    early_uart::early_puts(b"\r\n");
 
-    uart::early_puts(b"decoded: ");
-    uart::early_puts(fault_name(frame.esr));
-    uart::early_puts(b"\r\n");
+    early_uart::early_puts(b"decoded: ");
+    early_uart::early_puts(fault_name(frame.esr));
+    early_uart::early_puts(b"\r\n");
 
     if is_address_size_fault(frame.esr) {
-        uart::early_puts(b"Address Size Fault\r\n");
+        early_uart::early_puts(b"Address Size Fault\r\n");
     }
 
     if is_translation_fault(frame.esr) {
-        uart::early_puts(b"Translation Fault\r\n");
+        early_uart::early_puts(b"Translation Fault\r\n");
     }
 
     #[cfg(any(translation_fault_test, dram_oob_test))]
     if should_resume_after_test(frame) {
-        uart::early_puts(b"test enabled: resume at next instruction\r\n");
+        early_uart::early_puts(b"test enabled: resume at next instruction\r\n");
         frame.elr = frame.elr.wrapping_add(4);
         return;
     }
@@ -217,23 +217,23 @@ fn is_abort_exception(esr: u64) -> bool {
 
 fn put_vector_name(vector: u64) {
     match vector {
-        0 => uart::early_puts(b"current_el_sp0_sync"),
-        1 => uart::early_puts(b"current_el_sp0_irq"),
-        2 => uart::early_puts(b"current_el_sp0_fiq"),
-        3 => uart::early_puts(b"current_el_sp0_serror"),
-        4 => uart::early_puts(b"current_el_spx_sync"),
-        5 => uart::early_puts(b"current_el_spx_irq"),
-        6 => uart::early_puts(b"current_el_spx_fiq"),
-        7 => uart::early_puts(b"current_el_spx_serror"),
-        8 => uart::early_puts(b"lower_el_a64_sync"),
-        9 => uart::early_puts(b"lower_el_a64_irq"),
-        10 => uart::early_puts(b"lower_el_a64_fiq"),
-        11 => uart::early_puts(b"lower_el_a64_serror"),
-        12 => uart::early_puts(b"lower_el_a32_sync"),
-        13 => uart::early_puts(b"lower_el_a32_irq"),
-        14 => uart::early_puts(b"lower_el_a32_fiq"),
-        15 => uart::early_puts(b"lower_el_a32_serror"),
-        _ => uart::early_puts(b"unknown"),
+        0 => early_uart::early_puts(b"current_el_sp0_sync"),
+        1 => early_uart::early_puts(b"current_el_sp0_irq"),
+        2 => early_uart::early_puts(b"current_el_sp0_fiq"),
+        3 => early_uart::early_puts(b"current_el_sp0_serror"),
+        4 => early_uart::early_puts(b"current_el_spx_sync"),
+        5 => early_uart::early_puts(b"current_el_spx_irq"),
+        6 => early_uart::early_puts(b"current_el_spx_fiq"),
+        7 => early_uart::early_puts(b"current_el_spx_serror"),
+        8 => early_uart::early_puts(b"lower_el_a64_sync"),
+        9 => early_uart::early_puts(b"lower_el_a64_irq"),
+        10 => early_uart::early_puts(b"lower_el_a64_fiq"),
+        11 => early_uart::early_puts(b"lower_el_a64_serror"),
+        12 => early_uart::early_puts(b"lower_el_a32_sync"),
+        13 => early_uart::early_puts(b"lower_el_a32_irq"),
+        14 => early_uart::early_puts(b"lower_el_a32_fiq"),
+        15 => early_uart::early_puts(b"lower_el_a32_serror"),
+        _ => early_uart::early_puts(b"unknown"),
     }
 }
 

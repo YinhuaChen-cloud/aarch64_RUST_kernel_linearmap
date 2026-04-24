@@ -16,6 +16,7 @@ if (rustc_path == "") {
 action("kernel") {
   script = "//build/build_kernel.py"
   sources = [
+    "src/early_uart.rs",
     "src/exception.rs",
     "src/init.rs",
     "src/main.rs",

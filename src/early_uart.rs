@@ -1,6 +1,5 @@
-use crate::mmu::LINEAR_MAP_BASE;
+pub const EARLY_PL011_BASE: usize = 0x0900_0000;
 
-const PL011_BASE: usize = 0x0900_0000 + LINEAR_MAP_BASE;
 const UART_DR_OFFSET: usize = 0x00;
 const UART_FR_OFFSET: usize = 0x18;
 const UART_FR_TXFF: u32 = 1 << 5;
@@ -23,24 +22,24 @@ fn write_byte_at(base: usize, byte: u8) {
     }
 }
 
-pub fn puts(s: &[u8]) {
+pub fn early_puts(s: &[u8]) {
     for &byte in s {
-        write_byte(byte);
+        early_write_byte(byte);
     }
 }
 
-pub fn write_byte(byte: u8) {
-    write_byte_at(PL011_BASE, byte)
+pub fn early_write_byte(byte: u8) {
+    write_byte_at(EARLY_PL011_BASE, byte)
 }
 
-pub fn put_hex_u64(value: u64) {
-    puts(b"0x");
+pub fn early_put_hex_u64(value: u64) {
+    early_puts(b"0x");
     for shift in (0..16).rev() {
         let nibble = ((value >> (shift * 4)) & 0xf) as u8;
         let digit = match nibble {
             0..=9 => b'0' + nibble,
             _ => b'a' + (nibble - 10),
         };
-        write_byte(digit);
+        early_write_byte(digit);
     }
 }
