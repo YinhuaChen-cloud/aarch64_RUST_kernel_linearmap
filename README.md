@@ -54,6 +54,7 @@ hello world
 qemu-system-aarch64 \
   -machine virt \
   -cpu cortex-a53 \
+  -m 1536M \
   -nographic \
   -serial mon:stdio \
   -smp 1 \
