@@ -16,6 +16,7 @@ action("kernel") {
   sources = [
     "src/main.rs",
     "src/start.rs",
+    "src/uart.rs",
   ]
   inputs = [ "link.x" ]
   outputs = [ "$root_build_dir/kernel.elf" ]
