@@ -15,6 +15,7 @@ action("kernel") {
   script = "//build/build_kernel.py"
   sources = [
     "src/main.rs",
+    "src/mmu.rs",
     "src/start.rs",
     "src/uart.rs",
   ]
