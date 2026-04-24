@@ -31,6 +31,7 @@ SECTIONS
     __boot_stack_bottom = .;
     . += 0x4000;
     __boot_stack_top = .;
+    __boot_stack_top_linear = __boot_stack_top + LINEAR_MAP_OFFSET;
   }
 
   . = ALIGN(4096);
