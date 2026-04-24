@@ -3,6 +3,9 @@ use core::arch::asm;
 const ENTRY_COUNT: usize = 512;
 const PAGE_SHIFT_2M: usize = 21;
 const PAGE_SHIFT_1G: usize = 30;
+pub const LINEAR_MAP_BASE: usize = 0xffff_ffff_0000_0000;
+const LINEAR_L1_START_INDEX: usize = 0;
+const LINEAR_MAP_GB_COUNT: usize = 4;
 const OOB_TEST_VA: usize = 0xa000_0000;
 
 const DESC_VALID: u64 = 1 << 0;
@@ -22,24 +25,33 @@ const MAIR_NORMAL_WB: u64 = 0xff;
 const MAIR_VALUE: u64 = MAIR_DEVICE_NGNRNE | (MAIR_NORMAL_WB << 8);
 
 const TCR_T0SZ_4GB: u64 = 32;
+const TCR_T1SZ_4GB: u64 = 32 << 16;
 const TCR_IRGN0_WBWA: u64 = 0b01 << 8;
 const TCR_ORGN0_WBWA: u64 = 0b01 << 10;
 const TCR_SH0_INNER: u64 = 0b11 << 12;
 const TCR_TG0_4K: u64 = 0b00 << 14;
-const TCR_EPD1_DISABLE: u64 = 1 << 23;
+const TCR_IRGN1_WBWA: u64 = 0b01 << 24;
+const TCR_ORGN1_WBWA: u64 = 0b01 << 26;
+const TCR_SH1_INNER: u64 = 0b11 << 28;
+const TCR_TG1_4K: u64 = 0b10 << 30;
 const TCR_IPS_40BIT: u64 = 0b010 << 32;
 const TCR_VALUE: u64 = TCR_T0SZ_4GB
+    | TCR_T1SZ_4GB
     | TCR_IRGN0_WBWA
     | TCR_ORGN0_WBWA
     | TCR_SH0_INNER
     | TCR_TG0_4K
-    | TCR_EPD1_DISABLE
+    | TCR_IRGN1_WBWA
+    | TCR_ORGN1_WBWA
+    | TCR_SH1_INNER
+    | TCR_TG1_4K
     | TCR_IPS_40BIT;
 
 #[repr(C, align(4096))]
 struct PageTable([u64; ENTRY_COUNT]);
 
 static mut L1_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
+static mut LINEAR_L1_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
 static mut LOW_1GB_L2_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
 #[cfg(dram_oob_test)]
 static mut OOB_1GB_L2_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
@@ -88,11 +100,29 @@ unsafe fn build_identity_map() {
     }
 }
 
+unsafe fn build_linear_map() {
+    // TTBR1 uses the top 4GB VA region selected by T1SZ=32.
+    // Within that region, the walk starts from L1 and uses VA[31:30],
+    // so the 4 x 1GB blocks must live in L1 entries 0..3.
+    for index in 0..LINEAR_MAP_GB_COUNT {
+        let phys = index << PAGE_SHIFT_1G;
+        let attrs = if index == 0 {
+            device_block_attrs()
+        } else {
+            normal_block_attrs()
+        };
+
+        LINEAR_L1_TABLE.0[LINEAR_L1_START_INDEX + index] = block_desc(phys, attrs);
+    }
+}
+
 pub fn init() {
     unsafe {
         build_identity_map();
+        build_linear_map();
 
         let ttbr0 = core::ptr::addr_of!(L1_TABLE) as u64;
+        let ttbr1 = core::ptr::addr_of!(LINEAR_L1_TABLE) as u64;
         let mut sctlr: u64;
 
         asm!(
@@ -100,6 +130,7 @@ pub fn init() {
             "msr mair_el1, {mair}",
             "msr tcr_el1, {tcr}",
             "msr ttbr0_el1, {ttbr0}",
+            "msr ttbr1_el1, {ttbr1}",
             "isb",
             "tlbi vmalle1",
             "dsb ish",
@@ -108,6 +139,7 @@ pub fn init() {
             mair = in(reg) MAIR_VALUE,
             tcr = in(reg) TCR_VALUE,
             ttbr0 = in(reg) ttbr0,
+            ttbr1 = in(reg) ttbr1,
             sctlr = out(reg) sctlr,
             options(nostack)
         );
