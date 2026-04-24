@@ -17,7 +17,7 @@ action("kernel") {
   script = "//build/build_kernel.py"
   sources = [
     "src/exception.rs",
-    "src/main.rs",
+    "src/init.rs",
     "src/mmu.rs",
     "src/start.rs",
     "src/uart.rs",
@@ -29,7 +29,7 @@ action("kernel") {
     "--rustc",
     rustc_path,
     "--source",
-    rebase_path("//src/main.rs", root_build_dir),
+    rebase_path("//src/init.rs", root_build_dir),
     "--linker",
     rebase_path("//link.x", root_build_dir),
     "--output",

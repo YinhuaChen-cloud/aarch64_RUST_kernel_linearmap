@@ -7,7 +7,7 @@ global_asm!(
 _start:
     ldr x0, =__boot_stack_top
     mov sp, x0
-    bl rust_main
+    bl init
 1:
     wfe
     b 1b

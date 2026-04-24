@@ -4,7 +4,7 @@ This project builds a minimal bare-metal kernel for `qemu-system-aarch64` with G
 
 ## Files
 
-- `src/main.rs`: reset entry and Rust kernel code
+- `src/init.rs`: reset entry and Rust kernel code
 - `link.x`: fixed load address and memory layout
 - `BUILD.gn`: GN target that invokes `rustc`
 - `build/build_kernel.py`: tiny build helper used by Ninja
