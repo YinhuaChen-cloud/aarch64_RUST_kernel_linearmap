@@ -6,7 +6,7 @@ const EXCEPTION_FRAME_SIZE: usize = core::mem::size_of::<ExceptionFrame>();
 
 global_asm!(
     r#"
-    .section .text.exceptions, "ax"
+    .section .boot.text.exceptions, "ax"
     .align 11
     .global __exception_vectors
 __exception_vectors:
@@ -139,6 +139,7 @@ unsafe extern "C" {
     static __exception_vectors: u8;
 }
 
+#[link_section = ".boot.text"]
 pub fn init() {
     unsafe {
         let vbar = core::ptr::addr_of!(__exception_vectors) as u64;
@@ -161,6 +162,7 @@ pub struct ExceptionFrame {
     pub spsr: u64,
 }
 
+#[link_section = ".boot.text"]
 #[no_mangle]
 pub extern "C" fn rust_exception_handler(frame: &mut ExceptionFrame) {
     uart::early_puts(b"\r\nexception: ");
@@ -202,19 +204,23 @@ pub extern "C" fn rust_exception_handler(frame: &mut ExceptionFrame) {
 }
 
 #[cfg(any(translation_fault_test, dram_oob_test))]
+#[link_section = ".boot.text"]
 fn should_resume_after_test(frame: &ExceptionFrame) -> bool {
     is_synchronous_vector(frame.vector) && is_abort_exception(frame.esr)
 }
 
 #[cfg(any(translation_fault_test, dram_oob_test))]
+#[link_section = ".boot.text"]
 fn is_synchronous_vector(vector: u64) -> bool {
     matches!(vector, 0 | 4 | 8 | 12)
 }
 
+#[link_section = ".boot.text"]
 fn is_abort_exception(esr: u64) -> bool {
     matches!((esr >> 26) & 0x3f, 0x20 | 0x21 | 0x24 | 0x25)
 }
 
+#[link_section = ".boot.text"]
 fn put_vector_name(vector: u64) {
     match vector {
         0 => uart::early_puts(b"current_el_sp0_sync"),
@@ -237,6 +243,7 @@ fn put_vector_name(vector: u64) {
     }
 }
 
+#[link_section = ".boot.text"]
 fn is_translation_fault(esr: u64) -> bool {
     let ec = (esr >> 26) & 0x3f;
     let fsc = esr & 0x3f;
@@ -244,6 +251,7 @@ fn is_translation_fault(esr: u64) -> bool {
     matches!(ec, 0x20 | 0x21 | 0x24 | 0x25) && matches!(fsc, 0b000100..=0b000111)
 }
 
+#[link_section = ".boot.text"]
 fn is_address_size_fault(esr: u64) -> bool {
     let ec = (esr >> 26) & 0x3f;
     let fsc = esr & 0x3f;
@@ -251,6 +259,7 @@ fn is_address_size_fault(esr: u64) -> bool {
     matches!(ec, 0x20 | 0x21 | 0x24 | 0x25) && matches!(fsc, 0b000000..=0b000011)
 }
 
+#[link_section = ".boot.text"]
 fn fault_name(esr: u64) -> &'static [u8] {
     let ec = (esr >> 26) & 0x3f;
     let fsc = esr & 0x3f;

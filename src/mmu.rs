@@ -50,10 +50,14 @@ const TCR_VALUE: u64 = TCR_T0SZ_4GB
 #[repr(C, align(4096))]
 struct PageTable([u64; ENTRY_COUNT]);
 
+#[link_section = ".boot.bss.pgtables"]
 static mut L1_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
+#[link_section = ".boot.bss.pgtables"]
 static mut LINEAR_L1_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
+#[link_section = ".boot.bss.pgtables"]
 static mut LOW_1GB_L2_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
 #[cfg(dram_oob_test)]
+#[link_section = ".boot.bss.pgtables"]
 static mut OOB_1GB_L2_TABLE: PageTable = PageTable([0; ENTRY_COUNT]);
 
 #[inline(always)]
@@ -76,6 +80,7 @@ const fn normal_block_attrs() -> u64 {
     ATTR_IDX_NORMAL | ACCESS_FLAG | INNER_SHAREABLE
 }
 
+#[link_section = ".boot.text"]
 unsafe fn build_identity_map() {
     L1_TABLE.0[0] = table_desc(core::ptr::addr_of!(LOW_1GB_L2_TABLE) as usize);
 
@@ -100,6 +105,7 @@ unsafe fn build_identity_map() {
     }
 }
 
+#[link_section = ".boot.text"]
 unsafe fn build_linear_map() {
     // TTBR1 uses the top 4GB VA region selected by T1SZ=32.
     // Within that region, the walk starts from L1 and uses VA[31:30],
@@ -116,6 +122,7 @@ unsafe fn build_linear_map() {
     }
 }
 
+#[link_section = ".boot.text"]
 pub fn init() {
     unsafe {
         build_identity_map();

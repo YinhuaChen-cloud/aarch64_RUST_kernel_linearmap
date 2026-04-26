@@ -10,6 +10,7 @@ mod mmu;
 mod start;
 mod uart;
 
+#[link_section = ".boot.text"]
 #[no_mangle]
 pub extern "C" fn init() -> ! {
     exception::init();
@@ -43,7 +44,18 @@ pub extern "C" fn init() -> ! {
     #[cfg(not(any(translation_fault_test, dram_oob_test)))]
     uart::early_puts(b"exception test disabled\r\n");
 
-    main::main()
+    jump_to_high_kernel(main::main)
+}
+
+#[link_section = ".boot.text"]
+fn jump_to_high_kernel(entry: extern "C" fn() -> !) -> ! {
+    unsafe {
+        core::arch::asm!(
+            "br {entry}",
+            entry = in(reg) entry,
+            options(noreturn)
+        );
+    }
 }
 
 #[panic_handler]
