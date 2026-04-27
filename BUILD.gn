@@ -2,6 +2,7 @@ declare_args() {
   rustc_path = ""
   translation_fault_test = true
   dram_oob_test = true
+  enable_debug_symbols = true
 }
 
 if (rustc_path == "") {
@@ -49,6 +50,10 @@ action("kernel") {
       "--cfg",
       "dram_oob_test",
     ]
+  }
+
+  if (enable_debug_symbols) {
+    args += [ "--debug-symbols" ]
   }
 }
 

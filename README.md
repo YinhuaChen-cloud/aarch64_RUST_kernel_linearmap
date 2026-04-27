@@ -32,6 +32,12 @@ gn gen out/default
 ninja -C out/default
 ```
 
+Debug symbols are enabled by default. To disable them for a smaller ELF:
+
+```bash
+gn gen out/default --args='enable_debug_symbols=false'
+```
+
 The build output is:
 
 - `out/default/kernel.elf`

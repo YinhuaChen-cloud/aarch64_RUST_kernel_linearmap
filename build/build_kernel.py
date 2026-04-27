@@ -13,6 +13,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--linker", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--cfg", action="append", default=[])
+    parser.add_argument("--debug-symbols", action="store_true")
     return parser.parse_args()
 
 
@@ -51,6 +52,14 @@ def main() -> int:
         "--target",
         "aarch64-unknown-none",
     ]
+
+    if args.debug_symbols:
+        command.extend([
+            "-C",
+            "debuginfo=2",
+            "-C",
+            "force-frame-pointers=yes",
+        ])
 
     for cfg in args.cfg:
         command.extend(["--cfg", cfg])
