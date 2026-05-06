@@ -21,6 +21,7 @@ action("kernel") {
     "src/early/init.rs",
     "src/early/mmu.rs",
     "src/early/start.rs",
+    "src/later/allocator.rs",
     "src/later/head.rs",
     "src/later/main.rs",
     "src/later/uart.rs",

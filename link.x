@@ -53,6 +53,10 @@ SECTIONS
     *liblater.rlib:(.bss .bss.*)
   }
 
+  . = ALIGN(4096);
+  __kernel_linear_end = .;
+  __kernel_phys_end = . - LINEAR_MAP_OFFSET;
+
   /DISCARD/ : {
     *(.comment)
     *(.eh_frame*)
